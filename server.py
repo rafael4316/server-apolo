@@ -181,6 +181,31 @@ async def create_license(data: CreateLicenseRequest):
     session.close()
     return {"success": True, "message": "Licencia creada."}
 
+
+
+@app.get("/licenses")
+async def list_licenses(admin_token: str):
+    ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+    if admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="No autorizado.")
+
+    session = Session()
+    licenses = session.query(License).all()
+
+    result = []
+    for lic in licenses:
+        result.append({
+            "username": lic.username,
+            "license_key": lic.license_key,
+            "machine_id": lic.machine_id,
+            "expiration_date": lic.expiration_date.isoformat() if lic.expiration_date else None,
+            "active": getattr(lic, "active", True)
+        })
+
+    session.close()
+    return result
+
+
 # Endpoint raíz para comprobación rápida
 @app.get("/")
 async def root():
